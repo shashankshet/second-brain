@@ -12,3 +12,10 @@ class Memory(Base):
 
     category = Column(String)
     content = Column(Text)
+
+class Conversation(Base):
+    __tablename__ = "conversations"
+
+    id = Column(Integer, primary_key=True)
+    role = Column(String)
+    message = Column(Text)

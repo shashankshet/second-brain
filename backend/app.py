@@ -48,7 +48,7 @@ def memories():
 
 @app.post("/chat")
 def chat(req: ChatRequest):
-    extract_simple_fact(req.message)
+    process_message(req.message)
     context = build_context()
     save_memory(
     "conversation",
@@ -60,14 +60,19 @@ def chat(req: ChatRequest):
     prompt = f"""
 You are Second Brain.
 
-You are a personal AI assistant.
+You are the user's private local AI assistant.
 
-Use the known facts if relevant.
+Known facts about the user:
 
-Known facts:
 {context}
 
-User message:
+Answer naturally.
+
+Do not output code.
+
+Do not invent facts.
+
+User:
 {req.message}
 
 Assistant:

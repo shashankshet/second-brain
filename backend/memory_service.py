@@ -29,14 +29,24 @@ def save_memory(category, content):
 
     db = SessionLocal()
 
-    db.add(
-        Memory(
-            category=category,
-            content=content
+    existing = (
+        db.query(Memory)
+        .filter(
+            Memory.category == category,
+            Memory.content == content
         )
+        .first()
     )
 
-    db.commit()
+    if not existing:
+        db.add(
+            Memory(
+                category=category,
+                content=content
+            )
+        )
+        db.commit()
+
     db.close()
 
 def process_message(message):
@@ -78,12 +88,42 @@ def build_context():
 
 def extract_simple_fact(message):
 
-    msg = message.lower()
+    msg = message.lower().strip()
 
-    if "i am a" in msg:
-        profession = msg.replace("i am a", "").strip()
+    if msg.startswith("i am a "):
+
+        profession = msg.replace(
+            "i am a ",
+            ""
+        ).strip()
 
         save_memory(
             "profession",
             profession
+        )
+
+    elif msg.startswith("i am an "):
+
+        profession = msg.replace(
+            "i am an ",
+            ""
+        ).strip()
+
+        save_memory(
+            "profession",
+            profession
+        )
+
+    elif "vegetarian" in msg:
+
+        save_memory(
+            "diet",
+            "vegetarian"
+        )
+
+    elif "want" in msg:
+
+        save_memory(
+            "goal",
+            message
         )
