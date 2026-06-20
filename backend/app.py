@@ -4,7 +4,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, SessionLocal
 from models import Base, Memory, Conversation
 from schemas import ChatRequest
-
+from vector_store import build_relevant_context, save_memory_embedding
 from memory_service import (
     process_message,
     build_context,
@@ -50,7 +50,9 @@ def chat(req: ChatRequest):
 
     process_message(req.message)
 
-    context = build_context()
+    context = build_relevant_context(
+    req.message
+)
 
     prompt = f"""
 You are Second Brain.
@@ -72,7 +74,11 @@ User:
 
 Assistant:
 """
+    print("QUERY:")
+    print(req.message)
 
+    print("RELEVANT CONTEXT:")
+    print(context)
     response = ask_ollama(prompt)
 
     return {
@@ -95,3 +101,21 @@ def conversations():
         }
         for c in data
     ]
+
+@app.get("/reindex")
+def reindex():
+
+    db = SessionLocal()
+
+    memories = db.query(Memory).all()
+
+    for m in memories:
+
+        save_memory_embedding(
+            m.id,
+            f"{m.category}: {m.content}"
+        )
+
+    db.close()
+
+    return {"status": "done"}
