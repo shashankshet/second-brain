@@ -13,15 +13,20 @@ model = SentenceTransformer(
     "all-MiniLM-L6-v2"
 )
 
+
 def save_memory_embedding(memory_id, text):
 
     embedding = model.encode(text).tolist()
 
-    collection.add(
-        ids=[str(memory_id)],
-        documents=[text],
-        embeddings=[embedding]
-    )
+    try:
+        collection.add(
+            ids=[str(memory_id)],
+            documents=[text],
+            embeddings=[embedding]
+        )
+    except:
+        pass
+
 
 def search_memories(query, top_k=5):
 
@@ -35,6 +40,7 @@ def search_memories(query, top_k=5):
     )
 
     return results["documents"][0]
+
 
 def build_relevant_context(query):
 

@@ -4,7 +4,7 @@ import requests
 
 from database import SessionLocal
 from models import Memory
-
+from vector_store import save_memory_embedding
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
 
@@ -40,6 +40,10 @@ def save_memory(category, content):
         db.commit()
 
         db.refresh(memory)
+        save_memory_embedding(
+        memory.id,
+        f"{category}: {content}"
+    )
 
         return memory.id
 
