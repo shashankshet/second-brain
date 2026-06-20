@@ -11,6 +11,9 @@ from memory_service import (
     ask_ollama,
     save_conversation
 )
+from memory_service import (
+    build_user_profile
+)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -57,21 +60,18 @@ def chat(req: ChatRequest):
     context = build_hybrid_context(
     req.message
 )
+    profile = build_user_profile()
 
     prompt = f"""
 You are Second Brain.
 
-You are the user's private local AI assistant.
+User Profile:
 
-Known facts:
+{profile}
+
+Relevant Context:
 
 {context}
-
-Answer naturally.
-
-Do not output code.
-
-Do not invent facts.
 
 User:
 {req.message}
@@ -126,3 +126,8 @@ def reindex():
     db.close()
 
     return {"status": "done"}
+
+@app.get("/profile")
+def profile():
+
+    return build_user_profile()

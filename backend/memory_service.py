@@ -11,7 +11,17 @@ from vector_store import (
 )
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
+SINGLE_VALUE_CATEGORIES = [
+    "profession",
+    "company",
+    "diet"
+]
 
+MULTI_VALUE_CATEGORIES = [
+    "goal",
+    "friend",
+    "project"
+]
 
 # -------------------------
 # Memory Storage
@@ -22,6 +32,24 @@ def save_memory(category, content):
     db = SessionLocal()
 
     try:
+
+        if category in SINGLE_VALUE_CATEGORIES:
+
+            existing = (
+                db.query(Memory)
+                .filter(
+                    Memory.category == category
+                )
+                .first()
+            )
+
+            if existing:
+
+                existing.content = content
+
+                db.commit()
+
+                return existing.id
 
         existing = (
             db.query(Memory)
@@ -37,7 +65,8 @@ def save_memory(category, content):
 
         memory = Memory(
             category=category,
-            content=content
+            content=content,
+            confidence=100
         )
 
         db.add(memory)
@@ -45,14 +74,16 @@ def save_memory(category, content):
         db.commit()
 
         db.refresh(memory)
+
         save_memory_embedding(
-        memory.id,
-        f"{category}: {content}"
-    )
+            memory.id,
+            f"{category}: {content}"
+        )
 
         return memory.id
 
     finally:
+
         db.close()
 
 
@@ -221,3 +252,34 @@ def save_conversation(
     finally:
 
         db.close()
+
+def build_user_profile():
+
+    memories = get_memories()
+
+    profile = {}
+
+    for m in memories:
+
+        if m.category in profile:
+
+            if isinstance(
+                profile[m.category],
+                list
+            ):
+                profile[m.category].append(
+                    m.content
+                )
+
+            else:
+
+                profile[m.category] = [
+                    profile[m.category],
+                    m.content
+                ]
+
+        else:
+
+            profile[m.category] = m.content
+
+    return profile

@@ -13,7 +13,10 @@ class Memory(Base):
     id = Column(Integer, primary_key=True)
 
     category = Column(String)
+
     content = Column(Text)
+
+    confidence = Column(Integer, default=100)
 
 class Conversation(Base):
     __tablename__ = "conversations"
