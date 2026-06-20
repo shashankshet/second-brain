@@ -1,90 +1,55 @@
 # memory_service.py
 
 import requests
-import json
+
 from database import SessionLocal
 from models import Memory
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
-def extract_memory(message):
 
-    response = requests.post(
-        OLLAMA_URL,
-        json={
-            "model": "phi3:latest",
-            "prompt": message,
-            "stream": False
-        }
-    )
-
-    print("STATUS:", response.status_code)
-    print("BODY:", response.text)
-
-    data = response.json()
-
-    return data.get("response", "[]")
+# -------------------------
+# Memory Storage
+# -------------------------
 
 def save_memory(category, content):
 
     db = SessionLocal()
 
-    existing = (
-        db.query(Memory)
-        .filter(
-            Memory.category == category,
-            Memory.content == content
-        )
-        .first()
-    )
-
-    if not existing:
-        db.add(
-            Memory(
-                category=category,
-                content=content
-            )
-        )
-        db.commit()
-
-    db.close()
-
-def process_message(message):
-
-    raw = extract_memory(message)
-
     try:
 
-        memories = json.loads(raw)
-
-        for m in memories:
-            save_memory(
-                m["category"],
-                m["content"]
+        existing = (
+            db.query(Memory)
+            .filter(
+                Memory.category == category,
+                Memory.content == content
             )
+            .first()
+        )
 
-    except:
-        pass
+        if existing:
+            return existing.id
 
-def get_memories():
+        memory = Memory(
+            category=category,
+            content=content
+        )
 
-    db = SessionLocal()
+        db.add(memory)
 
-    memories = db.query(Memory).all()
+        db.commit()
 
-    db.close()
+        db.refresh(memory)
 
-    return memories
-def build_context():
+        return memory.id
 
-    memories = get_memories()
+    finally:
+        db.close()
 
-    text = ""
 
-    for m in memories:
-        text += f"{m.category}: {m.content}\n"
-
-    return text
+# -------------------------
+# Simple Fact Extraction
+# -------------------------
 
 def extract_simple_fact(message):
 
@@ -114,6 +79,15 @@ def extract_simple_fact(message):
             profession
         )
 
+    elif msg.startswith("i work at "):
+
+        company = message[10:].strip()
+
+        save_memory(
+            "company",
+            company
+        )
+
     elif "vegetarian" in msg:
 
         save_memory(
@@ -121,9 +95,91 @@ def extract_simple_fact(message):
             "vegetarian"
         )
 
-    elif "want" in msg:
+    elif msg.startswith("i want "):
+
+        goal = message[7:].strip()
 
         save_memory(
             "goal",
+            goal
+        )
+
+    elif msg.startswith("my friend "):
+
+        save_memory(
+            "friend",
             message
         )
+
+
+# -------------------------
+# Process Message
+# -------------------------
+
+def process_message(message):
+
+    extract_simple_fact(message)
+
+
+# -------------------------
+# Memory Retrieval
+# -------------------------
+
+def get_memories():
+
+    db = SessionLocal()
+
+    try:
+
+        memories = db.query(Memory).all()
+
+        return memories
+
+    finally:
+
+        db.close()
+
+
+# -------------------------
+# Context Builder
+# -------------------------
+
+def build_context():
+
+    memories = get_memories()
+
+    if not memories:
+        return "No known facts."
+
+    lines = []
+
+    for m in memories:
+
+        lines.append(
+            f"- {m.category}: {m.content}"
+        )
+
+    return "\n".join(lines)
+
+
+# -------------------------
+# Ollama Chat
+# -------------------------
+
+def ask_ollama(prompt):
+
+    response = requests.post(
+        OLLAMA_URL,
+        json={
+            "model": "phi3:latest",
+            "prompt": prompt,
+            "stream": False
+        }
+    )
+
+    data = response.json()
+
+    return data.get(
+        "response",
+        "No response from model."
+    )

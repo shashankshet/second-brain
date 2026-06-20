@@ -1,15 +1,15 @@
 from fastapi import FastAPI
-
-from fastapi import FastAPI
-from memory_service import build_context, extract_simple_fact, extract_simple_fact, process_message, save_memory, save_memory
-from schemas import ChatRequest
-from database import engine
-from models import Base
-from database import SessionLocal
-from models import Memory
-import requests
 from fastapi.middleware.cors import CORSMiddleware
 
+from database import engine, SessionLocal
+from models import Base, Memory, Conversation
+from schemas import ChatRequest
+
+from memory_service import (
+    process_message,
+    build_context,
+    ask_ollama
+)
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -45,24 +45,19 @@ def memories():
         }
         for m in data
     ]
-
 @app.post("/chat")
 def chat(req: ChatRequest):
+
     process_message(req.message)
+
     context = build_context()
-    save_memory(
-    "conversation",
-    req.message
-)
-    print("CONTEXT:")
-    print(context)
 
     prompt = f"""
 You are Second Brain.
 
 You are the user's private local AI assistant.
 
-Known facts about the user:
+Known facts:
 
 {context}
 
@@ -78,17 +73,25 @@ User:
 Assistant:
 """
 
-    response = requests.post(
-        "http://localhost:11434/api/generate",
-        json={
-            "model": "phi3:latest",
-            "prompt": prompt,
-            "stream": False
-        }
-    )
-
-    data = response.json()
+    response = ask_ollama(prompt)
 
     return {
-        "response": data.get("response", "No response")
+        "response": response
     }
+
+@app.get("/conversations")
+def conversations():
+
+    db = SessionLocal()
+
+    data = db.query(Conversation).all()
+
+    db.close()
+
+    return [
+        {
+            "role": c.role,
+            "message": c.message
+        }
+        for c in data
+    ]
