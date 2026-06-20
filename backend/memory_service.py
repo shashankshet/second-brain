@@ -4,11 +4,12 @@ import requests
 
 from database import SessionLocal
 from models import Memory
-from vector_store import save_memory_embedding
+from vector_store import save_memory_embedding, save_summary_embedding
 from models import Conversation
 from vector_store import (
     save_conversation_embedding
 )
+from models import ConversationSummary
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
 SINGLE_VALUE_CATEGORIES = [
@@ -241,7 +242,12 @@ def save_conversation(
         db.add(conversation)
 
         db.commit()
-
+        count = (
+        db.query(Conversation)
+        .count()
+    )
+        if count % 5 == 0:
+            generate_conversation_summary()
         db.refresh(conversation)
 
         save_conversation_embedding(
@@ -283,3 +289,86 @@ def build_user_profile():
             profile[m.category] = m.content
 
     return profile
+
+def get_recent_conversations(limit=20):
+
+    db = SessionLocal()
+
+    try:
+
+        conversations = (
+            db.query(Conversation)
+            .order_by(
+                Conversation.id.desc()
+            )
+            .limit(limit)
+            .all()
+        )
+
+        return list(
+            reversed(conversations)
+        )
+
+    finally:
+
+        db.close()
+
+
+def generate_conversation_summary():
+
+    conversations = (
+        get_recent_conversations(20)
+    )
+
+    if not conversations:
+        return
+
+    text = ""
+
+    for c in conversations:
+
+        text += (
+            f"{c.role}: {c.message}\n"
+        )
+
+    prompt = f"""
+Summarize these conversations.
+
+Focus on:
+
+- Goals
+- Career
+- Relationships
+- Important events
+- Personal preferences
+
+Conversations:
+
+{text}
+
+Summary:
+"""
+
+    summary = ask_ollama(prompt)
+
+    db = SessionLocal()
+
+    try:
+
+        summary_record = ConversationSummary(
+summary=summary
+)
+
+        db.add(summary_record)
+
+        db.commit()
+
+        db.refresh(summary_record)
+
+        save_summary_embedding(
+            summary_record.id,
+            summary
+        )
+
+    finally:
+        db.close()

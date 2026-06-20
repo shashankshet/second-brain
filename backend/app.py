@@ -14,6 +14,7 @@ from memory_service import (
 from memory_service import (
     build_user_profile
 )
+from models import ConversationSummary
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI()
@@ -131,3 +132,24 @@ def reindex():
 def profile():
 
     return build_user_profile()
+
+@app.get("/summaries")
+def summaries():
+
+    db = SessionLocal()
+
+    data = (
+        db.query(
+            ConversationSummary
+        ).all()
+    )
+
+    db.close()
+
+    return [
+        {
+            "id": s.id,
+            "summary": s.summary
+        }
+        for s in data
+    ]

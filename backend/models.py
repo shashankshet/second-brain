@@ -4,6 +4,8 @@ from sqlalchemy import Column,Integer,String,Text
 from sqlalchemy.orm import declarative_base
 from sqlalchemy import Column,Integer,String,Text,DateTime
 from datetime import datetime
+from sqlalchemy import Column,Integer,String,Text,DateTime
+from datetime import datetime
 
 Base = declarative_base()
 
@@ -26,6 +28,18 @@ class Conversation(Base):
     role = Column(String)
 
     message = Column(Text)
+
+    created_at = Column(
+        DateTime,
+        default=datetime.utcnow
+    )
+
+class ConversationSummary(Base):
+    __tablename__ = "conversation_summaries"
+
+    id = Column(Integer, primary_key=True)
+
+    summary = Column(Text)
 
     created_at = Column(
         DateTime,

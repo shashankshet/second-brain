@@ -14,6 +14,11 @@ conversation_collection = (
         name="conversations"
     )
 )
+summary_collection = (
+    client.get_or_create_collection(
+        name="summaries"
+    )
+)
 model = SentenceTransformer(
     "all-MiniLM-L6-v2"
 )
@@ -115,3 +120,38 @@ def build_hybrid_context(
         + "\n\nCONVERSATIONS:\n"
         + "\n".join(conversations)
     )
+
+def save_summary_embedding(
+    summary_id,
+    text
+):
+
+    embedding = model.encode(
+        text
+    ).tolist()
+
+    summary_collection.add(
+        ids=[str(summary_id)],
+        documents=[text],
+        embeddings=[embedding]
+    )
+
+def search_summaries(
+    query,
+    top_k=3
+):
+
+    embedding = model.encode(
+        query
+    ).tolist()
+
+    results = (
+        summary_collection.query(
+            query_embeddings=[
+                embedding
+            ],
+            n_results=top_k
+        )
+    )
+
+    return results["documents"][0]
