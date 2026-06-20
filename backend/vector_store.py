@@ -9,6 +9,11 @@ collection = client.get_or_create_collection(
     name="memories"
 )
 
+conversation_collection = (
+    client.get_or_create_collection(
+        name="conversations"
+    )
+)
 model = SentenceTransformer(
     "all-MiniLM-L6-v2"
 )
@@ -47,3 +52,66 @@ def build_relevant_context(query):
     memories = search_memories(query)
 
     return "\n".join(memories)
+
+def save_conversation_embedding(
+    conversation_id,
+    text
+):
+
+    embedding = model.encode(
+        text
+    ).tolist()
+
+    try:
+
+        conversation_collection.add(
+            ids=[str(conversation_id)],
+            documents=[text],
+            embeddings=[embedding]
+        )
+
+    except:
+        pass
+
+
+def search_conversations(
+    query,
+    top_k=5
+):
+
+    embedding = model.encode(
+        query
+    ).tolist()
+
+    results = (
+        conversation_collection.query(
+            query_embeddings=[embedding],
+            n_results=top_k
+        )
+    )
+
+    return results["documents"][0]
+
+
+def build_hybrid_context(
+    query
+):
+
+    memories = search_memories(
+        query,
+        top_k=3
+    )
+
+    conversations = (
+        search_conversations(
+            query,
+            top_k=3
+        )
+    )
+
+    return (
+        "MEMORIES:\n"
+        + "\n".join(memories)
+        + "\n\nCONVERSATIONS:\n"
+        + "\n".join(conversations)
+    )

@@ -5,6 +5,11 @@ import requests
 from database import SessionLocal
 from models import Memory
 from vector_store import save_memory_embedding
+from models import Conversation
+from vector_store import (
+    save_conversation_embedding
+)
+
 OLLAMA_URL = "http://localhost:11434/api/generate"
 
 
@@ -187,3 +192,32 @@ def ask_ollama(prompt):
         "response",
         "No response from model."
     )
+
+def save_conversation(
+    role,
+    message
+):
+
+    db = SessionLocal()
+
+    try:
+
+        conversation = Conversation(
+            role=role,
+            message=message
+        )
+
+        db.add(conversation)
+
+        db.commit()
+
+        db.refresh(conversation)
+
+        save_conversation_embedding(
+            conversation.id,
+            f"{role}: {message}"
+        )
+
+    finally:
+
+        db.close()

@@ -4,11 +4,12 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import engine, SessionLocal
 from models import Base, Memory, Conversation
 from schemas import ChatRequest
-from vector_store import build_relevant_context, save_memory_embedding
+from vector_store import build_hybrid_context, build_relevant_context, save_memory_embedding
 from memory_service import (
     process_message,
     build_context,
-    ask_ollama
+    ask_ollama,
+    save_conversation
 )
 Base.metadata.create_all(bind=engine)
 
@@ -47,10 +48,13 @@ def memories():
     ]
 @app.post("/chat")
 def chat(req: ChatRequest):
-
+    save_conversation(
+    "user",
+    req.message
+)
     process_message(req.message)
 
-    context = build_relevant_context(
+    context = build_hybrid_context(
     req.message
 )
 
@@ -80,7 +84,10 @@ Assistant:
     print("RELEVANT CONTEXT:")
     print(context)
     response = ask_ollama(prompt)
-
+    save_conversation(
+    "assistant",
+    response
+)
     return {
         "response": response
     }
