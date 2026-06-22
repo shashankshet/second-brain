@@ -20,6 +20,8 @@ class Memory(Base):
 
     confidence = Column(Integer, default=100)
 
+    importance = Column(Integer, default=5)
+
 class Conversation(Base):
     __tablename__ = "conversations"
 

@@ -12,10 +12,18 @@ from vector_store import (
 from models import ConversationSummary
 
 OLLAMA_URL = "http://localhost:11434/api/generate"
+PROFILE_CATEGORIES = [
+    "profession",
+    "company",
+    "diet",
+    "location"
+]
+
 SINGLE_VALUE_CATEGORIES = [
     "profession",
     "company",
-    "diet"
+    "diet",
+    "location"
 ]
 
 MULTI_VALUE_CATEGORIES = [
@@ -65,10 +73,11 @@ def save_memory(category, content):
             return existing.id
 
         memory = Memory(
-            category=category,
-            content=content,
-            confidence=100
-        )
+        category=category,
+        content=content,
+        confidence=100,
+        importance=get_importance(category)
+    )
 
         db.add(memory)
 
@@ -372,3 +381,61 @@ summary=summary
 
     finally:
         db.close()
+
+
+def get_importance(category):
+
+    scores = {
+        "profession": 10,
+        "company": 9,
+        "goal": 10,
+        "diet": 7,
+        "friend": 6,
+        "project": 8,
+        "location": 7
+    }
+
+    return scores.get(category, 5)
+
+def build_user_profile():
+
+    memories = get_memories()
+
+    profile = {}
+
+    for memory in memories:
+
+        if memory.category not in PROFILE_CATEGORIES:
+            continue
+
+        profile[memory.category] = memory.content
+
+    return profile
+
+def get_goals():
+
+    memories = get_memories()
+
+    return [
+        m.content
+        for m in memories
+        if m.category == "goal"
+    ]
+
+def get_friends():
+
+    memories = get_memories()
+
+    return [
+        m.content
+        for m in memories
+        if m.category == "friend"
+    ]
+
+def build_full_profile():
+
+    return {
+        "profile": build_user_profile(),
+        "goals": get_goals(),
+        "friends": get_friends()
+    }

@@ -12,6 +12,9 @@ from memory_service import (
     save_conversation
 )
 from memory_service import (
+    build_full_profile
+)
+from memory_service import (
     build_user_profile
 )
 from models import ConversationSummary
@@ -66,13 +69,19 @@ def chat(req: ChatRequest):
     prompt = f"""
 You are Second Brain.
 
-User Profile:
+You are the user's private local AI assistant.
+
+USER PROFILE:
 
 {profile}
 
-Relevant Context:
+RELEVANT CONTEXT:
 
 {context}
+
+Answer naturally.
+
+Do not invent facts.
 
 User:
 {req.message}
@@ -153,3 +162,9 @@ def summaries():
         }
         for s in data
     ]
+
+
+@app.get("/profile")
+def profile():
+
+    return build_full_profile()
