@@ -1,110 +1,215 @@
 # 🧠 Second Brain
 
-A fully local, privacy-first AI personal assistant that continuously builds knowledge about you, remembers important facts, and helps you make better decisions.
+> A fully local, privacy-first AI assistant with long-term memory, semantic retrieval, conversation history, and personalized reasoning.
 
-Unlike cloud-based AI assistants, all data stays on your machine.
+Second Brain is an AI-powered personal assistant that learns about you over time, remembers important facts, retrieves relevant conversations, summarizes long-term interactions, and answers questions using your personal context.
+
+Unlike cloud-based AI assistants, **all data stays on your machine**.
 
 No OpenAI API.
-No external services.
-No data leaving your device.
 
-Built using:
+No external databases.
 
-* Ollama
-* FastAPI
-* SQLite
-* Next.js
-* Python
-* Open Source Models
+No cloud storage.
+
+Everything runs locally using open-source models.
 
 ---
 
-# Vision
+# Why Second Brain?
 
-Most AI assistants forget everything between conversations.
+Most AI assistants are stateless—they forget everything after a conversation.
 
-Second Brain aims to become a personal operating system that:
+Second Brain is designed to become your **personal AI Chief of Staff**, capable of:
 
-* Learns about you
-* Remembers important facts
-* Tracks goals
-* Understands relationships
-* Stores long-term memory
-* Provides personalized recommendations
-
-All while running completely locally.
+* Remembering who you are
+* Tracking long-term goals
+* Recalling past conversations
+* Understanding relationships
+* Building a persistent profile
+* Providing personalized recommendations
+* Running completely offline
 
 ---
 
-# Current Features
+# Features
 
-✅ Local LLM via Ollama
+## 🧠 Persistent Memory
 
-✅ Chat interface
-
-✅ Persistent memory storage
-
-✅ Fact extraction
-
-✅ Context retrieval
-
-✅ User profile memory
+Extracts and stores important facts about the user.
 
 Example:
 
+```text
 User:
-
-```text
 I am a backend engineer.
+
+Stored:
+profession → backend engineer
 ```
 
-Stored Memory:
+---
 
-```text
-profession: backend engineer
-```
+## 💬 Conversation Memory
+
+Stores every user and assistant interaction.
 
 Later:
 
 ```text
-Who am I?
+What did I tell you about Germany?
 ```
 
-Response:
+The assistant retrieves the relevant conversation instead of guessing.
+
+---
+
+## 🔎 Semantic Search
+
+Uses sentence embeddings and ChromaDB to retrieve only the most relevant memories instead of sending everything to the LLM.
+
+Technology:
+
+* Sentence Transformers
+* ChromaDB
+* Vector Search
+
+---
+
+## 📚 Long-Term Conversation Summaries
+
+Automatically summarizes conversations after a configurable number of chats.
+
+Instead of searching hundreds of messages, the assistant searches concise summaries.
+
+Example summary:
 
 ```text
-You are a backend engineer.
+Career:
+Preparing for Google interviews
+
+Fitness:
+Started muscle gain plan
+
+Personal:
+Visited Germany for work
+
+Goals:
+1Cr salary
 ```
+
+---
+
+## 👤 Dynamic User Profile
+
+Builds a persistent profile of the user.
+
+Example:
+
+```json
+{
+  "profession": "Backend Engineer",
+  "company": "Siemens",
+  "diet": "Vegetarian",
+  "goals": [
+    "1Cr Salary"
+  ]
+}
+```
+
+---
+
+## 🔄 Memory Updates
+
+Supports updating user attributes such as:
+
+* Profession
+* Company
+* Diet
+* Location
+
+instead of storing duplicate memories.
+
+---
+
+## 🔐 Privacy First
+
+Everything runs locally.
+
+No user data leaves your computer.
+
+No API keys required.
+
+---
+
+# Tech Stack
+
+## Frontend
+
+* Next.js
+* React
+* TypeScript
+
+## Backend
+
+* FastAPI
+* SQLAlchemy
+* SQLite
+
+## AI
+
+* Ollama
+* Phi-3 / Qwen2.5
+* Sentence Transformers
+
+## Vector Database
+
+* ChromaDB
 
 ---
 
 # Architecture
 
 ```text
-┌───────────────┐
-│   Next.js UI  │
-└───────┬───────┘
-        │
-        ▼
-┌───────────────┐
-│   FastAPI     │
-└───────┬───────┘
-        │
-        ▼
-┌───────────────┐
-│    Ollama     │
-│   Phi3/Qwen   │
-└───────┬───────┘
-        │
-        ▼
-┌───────────────┐
-│    SQLite     │
-└───────────────┘
+                    +----------------------+
+                    |     Next.js UI       |
+                    +----------+-----------+
+                               |
+                               |
+                    FastAPI REST API
+                               |
+        +----------------------+----------------------+
+        |                                             |
+        |                                             |
+ Fact Extraction                             Conversation Storage
+        |                                             |
+        |                                             |
+   SQLite Database                             SQLite Database
+        |                                             |
+        +----------------------+----------------------+
+                               |
+                      Embedding Generation
+                               |
+                     Sentence Transformers
+                               |
+                         ChromaDB Vector DB
+                               |
+             +-----------------+-----------------+
+             |                 |                 |
+         Facts Search   Conversation Search  Summary Search
+             |                 |                 |
+             +-----------------+-----------------+
+                               |
+                     Context Construction
+                               |
+                         Ollama (Phi3/Qwen)
+                               |
+                        Personalized Response
 ```
 
 ---
 
-# Project Structure
+# Current Project Structure
 
 ```text
 second-brain/
@@ -112,34 +217,164 @@ second-brain/
 ├── backend/
 │   ├── app.py
 │   ├── database.py
+│   ├── memory_service.py
+│   ├── vector_store.py
 │   ├── models.py
 │   ├── schemas.py
-│   └── memory_service.py
+│   └── memory.db
 │
 ├── frontend/
 │   ├── app/
-│   └── components/
+│   ├── components/
+│   └── package.json
 │
-└── data/
+└── README.md
 ```
 
 ---
 
-# Getting Started
+# Memory Layers
 
-## 1. Install Ollama
+Second Brain stores three different kinds of memory.
+
+## 1. Facts
+
+Structured information.
+
+Examples:
+
+```text
+Profession
+Company
+Goals
+Diet
+Friends
+```
+
+---
+
+## 2. Conversations
+
+Complete chat history.
+
+Example:
+
+```text
+User:
+I visited Germany in March.
+
+Assistant:
+That's great! How was your trip?
+```
+
+---
+
+## 3. Summaries
+
+Compressed long-term memory.
+
+Example:
+
+```text
+June Summary
+
+Career:
+Google Interview Preparation
+
+Travel:
+Germany
+
+Fitness:
+Bulking Journey
+```
+
+---
+
+# API Endpoints
+
+## Chat
+
+```
+POST /chat
+```
+
+---
+
+## Memories
+
+```
+GET /memories
+```
+
+Returns all structured memories.
+
+---
+
+## Conversations
+
+```
+GET /conversations
+```
+
+Returns conversation history.
+
+---
+
+## Summaries
+
+```
+GET /summaries
+```
+
+Returns generated conversation summaries.
+
+---
+
+## Profile
+
+```
+GET /profile
+```
+
+Returns the current user profile.
+
+---
+
+## Debug Context
+
+```
+GET /debug-context
+```
+
+Displays the context being sent to the LLM.
+
+---
+
+## Reindex
+
+```
+GET /reindex
+```
+
+Rebuilds the vector database from stored memories.
+
+---
+
+# Running the Project
+
+## Install Ollama
 
 ```bash
 brew install ollama
 ```
 
-Start Ollama:
+Start Ollama
 
 ```bash
 ollama serve
 ```
 
-Pull model:
+Pull a model
 
 ```bash
 ollama pull phi3
@@ -153,9 +388,7 @@ ollama pull qwen2.5:7b
 
 ---
 
-## 2. Backend Setup
-
-Create virtual environment:
+## Backend
 
 ```bash
 cd backend
@@ -163,29 +396,15 @@ cd backend
 python3 -m venv venv
 
 source venv/bin/activate
-```
 
-Install dependencies:
+pip install -r requirements.txt
 
-```bash
-pip install fastapi uvicorn sqlalchemy requests
-```
-
-Run backend:
-
-```bash
 uvicorn app:app --reload
-```
-
-Backend available at:
-
-```text
-http://localhost:8000
 ```
 
 ---
 
-## 3. Frontend Setup
+## Frontend
 
 ```bash
 cd frontend
@@ -195,120 +414,71 @@ npm install
 npm run dev
 ```
 
-Frontend available at:
+---
 
-```text
-http://localhost:3000
-```
+# Current Capabilities
+
+* ✅ Local LLM
+* ✅ Persistent Memory
+* ✅ Fact Extraction
+* ✅ Conversation Storage
+* ✅ Conversation Retrieval
+* ✅ Semantic Search
+* ✅ Vector Embeddings
+* ✅ Long-Term Summaries
+* ✅ Dynamic User Profile
+* ✅ Personalized Responses
+* ✅ Fully Offline
 
 ---
 
-# API Endpoints
+# Future Roadmap
 
-## Chat
+## Phase 6
 
-```http
-POST /chat
-```
+* Memory conflict detection
+* Memory confidence scores
+* Memory importance ranking
 
-Request:
+## Phase 7
 
-```json
-{
-  "message": "Who am I?"
-}
-```
+* Relationship extraction
+* Entity recognition
+* Dynamic knowledge graph
 
-Response:
+## Phase 8
 
-```json
-{
-  "response": "You are a backend engineer."
-}
-```
+* Neo4j integration
+* Relationship reasoning
 
----
+## Phase 9
 
-## Memories
+* Document ingestion (PDF, Notes, Resume)
+* Local RAG pipeline
 
-```http
-GET /memories
-```
+## Phase 10
 
-Returns all stored memories.
+* Personal AI Agents
 
----
+  * Career Agent
+  * Health Agent
+  * Finance Agent
+  * Relationship Agent
 
-# Current Memory Model
+## Phase 11
 
-```text
-profession
-diet
-goal
-friend
-company
-conversation
-```
-
-Example:
-
-```text
-profession: backend engineer
-
-diet: vegetarian
-
-goal: 1Cr salary
-```
+* Daily Briefings
+* Weekly Summaries
+* Proactive Suggestions
+* Goal Tracking
 
 ---
 
-# Roadmap
+# Vision
 
-## Phase 1
+Second Brain is more than a chatbot.
 
-* [x] Local LLM
-* [x] Memory Storage
-* [x] Memory Retrieval
-* [x] Chat UI
-
-## Phase 2
-
-* [ ] Conversation History
-* [ ] Memory Deduplication
-* [ ] Better Fact Extraction
-* [ ] User Profile Generation
-
-## Phase 3
-
-* [ ] Semantic Search
-* [ ] ChromaDB
-* [ ] Embeddings
-* [ ] Memory Ranking
-
-## Phase 4
-
-* [ ] Knowledge Graph
-* [ ] Neo4j Integration
-* [ ] Relationship Mapping
-* [ ] Goal Tracking
-
-## Phase 5
-
-* [ ] Personal Agents
-* [ ] Career Agent
-* [ ] Health Agent
-* [ ] Relationship Agent
-* [ ] Daily Briefings
-
----
-
-# Why Second Brain?
-
-Most AI assistants answer questions.
-
-Second Brain aims to understand the user.
-
-The goal is to build a personal AI chief-of-staff that remembers your goals, projects, relationships, and decisions while keeping everything private and local.
+It aims to become a **local AI operating system** that understands your life, remembers your experiences, and assists you in making better decisions while ensuring complete privacy.
 
 ---
 
